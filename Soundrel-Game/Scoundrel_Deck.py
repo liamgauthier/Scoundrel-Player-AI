@@ -19,10 +19,25 @@ class Card:
         An integer denoting the cards value. Must be a value from 2 to 14.
     """
     def __init__(self, suit:Suit, value:int):
-        self.validate(suit, value)
+        Card.validate(suit, value)
         self.suit = suit
         self.value = value
 
+    def __string__(self):
+        match self.suit:
+            case Suit.Club:
+                suit_str = " of Clubs"
+            case Suit.Diamond:
+                suit_str = " of Diamonds"
+            case Suit.Heart:
+                suit_str = " of Hearts"
+            case Suit.Spade:
+                suit_str = " of Spades"
+            case _:
+                raise Exception("Unknown Suit")
+        return str(self.value) + suit_str
+
+    @staticmethod
     def validate(suit, value):
         if not isinstance(suit, Suit):
             raise Exception("The suit provided must be a member of the class Suit")
