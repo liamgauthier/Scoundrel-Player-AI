@@ -1,0 +1,2 @@
+class ResolveRoomError(Exception):
+    pass
