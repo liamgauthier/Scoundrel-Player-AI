@@ -22,20 +22,23 @@ class Scoundrel:
         self.room = []
         self.score = BASE_SCORE
         self.num_monsters = BASE_NUM_MONSTERS
+        self.game_over = False
 
     def lose(self):
-        pass
+        self.game_over = True
 
-    def win(win):
-        pass
+    def win(self):
+        self.game_over = True
     
     def change_life(self, delta:int):
-        new_life = min(20, self.life + delta)
+        new_life = min(STARTING_LIFE, self.life + delta)
         self.life = new_life
         if new_life <= 0:
             self.lose()
 
     def enter_room(self):
+        if self.game_over:
+            raise Exception("Game Over")
         if not self.turn_resolved:
             raise Exception("The current room must be reolved first")
         while len(self.room) < 4 or len(self.deck) > 0:
