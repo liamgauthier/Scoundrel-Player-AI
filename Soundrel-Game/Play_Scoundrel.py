@@ -68,7 +68,12 @@ class Scoundrel:
         
         self.can_heal_this_turn = True
         
-        for resoltion_placing in range(4):
+        len_of_iterables = 3
+        room_size = len(self.room)
+        if room_size < 4:
+            len_of_iterables = room_size
+        
+        for resoltion_placing in range(len_of_iterables):
             card_room_placing = card_order[resoltion_placing]
             card = self.room[card_room_placing]
             self.resolve_card(card, slay_by_hand[resoltion_placing])
