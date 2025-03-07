@@ -23,7 +23,7 @@ class Card:
         self.suit = suit
         self.value = value
 
-    def __string__(self):
+    def __repr__(self):
         match self.suit:
             case Suit.Club:
                 suit_str = " of Clubs"
@@ -40,9 +40,9 @@ class Card:
     @staticmethod
     def validate(suit, value):
         if not isinstance(suit, Suit):
-            raise Exception("The suit provided must be a member of the class Suit")
+            raise TypeError("The suit provided must be a member of the class Suit")
         if value not in range(2, 15):
-            raise Exception("The value provided must be an integer between 2 and 14 (inclusive)")
+            raise TypeError("The value provided must be an integer between 2 and 14 (inclusive)")
         
 def create_scoundrel_deck():
     """
