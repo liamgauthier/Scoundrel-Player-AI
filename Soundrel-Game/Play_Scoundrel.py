@@ -5,8 +5,6 @@ import random as rand
 STARTING_LIFE = 20
 BASE_DURABILITY = 15 # Weapon durability refers to the largest monster slain with a weapon.
                      # Base durability is 15 implying that any monster can still be slain with this weapon.
-BASE_SCORE = -134 # The current score at the beginning of the game. Equal to 20 + sum of all health potion values
-                  # - sum of all monster values
 BASE_NUM_MONSTERS = 26
 
 class Scoundrel:
@@ -22,13 +20,37 @@ class Scoundrel:
         self.can_heal_this_turn = True
         self.turn_resolved = True
         self.room = []
-        self.score = BASE_SCORE
+        self.score = 0
         self.num_monsters = BASE_NUM_MONSTERS
         self.game_over = False
 
     def end_game(self):
         if self.verbose:
             pass
+        
+        if self.life > 0:
+            health_potion_total = 0
+
+            for card in self.room:
+                if card.suit == Suit.Heart:
+                    health_potion_total += card.value
+            for card in self.deck:
+                if card.suit == Suit.Heart:
+                    health_potion_total += card.value
+            
+            self.score = self.life + health_potion_total
+        else:
+            monster_total = 0
+
+            for card in self.room:
+                if card.suit == Suit.Club or card.suit == Suit.Spade:
+                    monster_total += card.value
+            for card in self.deck:
+                if card.suit == Suit.Club or card.suit == Suit.Spade:
+                    monster_total += card.value
+            
+            self.score = self.life - monster_total
+        
         self.game_over = True
     
     def change_life(self, delta:int):
@@ -42,7 +64,7 @@ class Scoundrel:
             raise GameOverError(f"Game Over. {"You Win!!!" if self.life > 0 else "You Lose..."} Final score: {self.score}")
         if not self.turn_resolved:
             raise InRoomError("The current room must be reolved first")
-        while len(self.room) < 4 or len(self.deck) > 0:
+        while len(self.room) < 4 and len(self.deck) > 0:
             self.room.append(self.deck.pop(0))
 
         self.turn_resolved = False
@@ -82,11 +104,12 @@ class Scoundrel:
             card_room_placing = card_order[resoltion_placing]
             card = self.room[card_room_placing]
             self.resolve_card(card, slay_by_hand[resoltion_placing])
-
-            if self.game_over:
-                break
             
-            self.room[resoltion_placing] = None
+            self.room[card_order[resoltion_placing]] = None
+
+            if self.num_monsters == 0:
+                self.end_game(card)
+                break
 
         if not self.game_over:
             new_room = list()
@@ -94,15 +117,14 @@ class Scoundrel:
                 if card is not None:
                     new_room.append(card)
             
-            if len(new_room) == 0:
-                self.end_game()
-            elif len(new_room) == 1:
+            if len(new_room) == 1:
                 self.room = new_room.copy()
+                self.turn_resolved = True
+                self.can_skip = True
             else:
                 raise Exception("room not cleared properly")
 
-            self.turn_resolved = True
-            self.can_skip = True
+            
 
         if self.verbose:
             pass
@@ -128,15 +150,11 @@ class Scoundrel:
         if slay_by_hand or monster_val >= weapon_dur:
             life_loss = monster_val
         else:
-            weapon_dur = monster_val
+            self.weapon_durability = monster_val
             life_loss = max(monster_val - self.weapon.value, 0)
         self.change_life(-life_loss)
         self.num_monsters -= 1
-        self.score += monster_val - life_loss
         self.discard_pile.append(card)
-
-        if self.num_monsters == 0:
-            self.end_game()
 
         if self.verbose:
             pass
@@ -153,12 +171,6 @@ class Scoundrel:
     def resolve_health_potion(self, card:Card):
         heal_val = card.value
 
-        if not self.can_heal_this_turn:
-            self.score -= heal_val
-        elif (life_to_gain := STARTING_LIFE - self.life) < heal_val:
-            loss_to_score = heal_val - life_to_gain
-            self.score -= loss_to_score
-        
         if self.can_heal_this_turn:
             self.change_life(heal_val)
 
@@ -171,9 +183,9 @@ class Scoundrel:
     @staticmethod
     def verify_card_order(card_order, slay_by_hand, room_size:int):
         
-        if hasattr(card_order, '__iter__'):
+        if not hasattr(card_order, '__iter__'):
             raise TypeError("card_order must be an iterable.")
-        if hasattr(slay_by_hand, '__iter__'):
+        if not hasattr(slay_by_hand, '__iter__'):
             raise TypeError("slay_by_hand must be an iterable.")
         
         len_of_iterables = 3
