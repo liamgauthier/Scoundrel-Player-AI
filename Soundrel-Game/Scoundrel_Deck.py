@@ -1,5 +1,6 @@
 from enum import Enum
 import random as rand
+import re
 
 class Suit(Enum):
     Club = 1
@@ -12,11 +13,11 @@ class Card:
     Card objects. Takes a suit and value from 2 to 14 inclusive where 11 is Jack, 12 is Queen, 13 is King, and 14 is Ace
     as arguments.
 
-    suit:Suit
-        The card's suit, an object from the Suit enum.
+        suit:Suit
+            The card's suit, an object from the Suit enum.
 
-    value:int
-        An integer denoting the cards value. Must be a value from 2 to 14.
+        value:int
+            An integer denoting the cards value. Must be a value from 2 to 14.
     """
     def __init__(self, suit:Suit, value:int):
         Card.validate(suit, value)
@@ -39,10 +40,14 @@ class Card:
 
     @staticmethod
     def validate(suit, value):
+        """
+        This static method is called by the initialize method to validate that the suit argument is of the Suit class
+        and that value is an integer between 2 and 14 (inclusive).
+        """
         if not isinstance(suit, Suit):
             raise TypeError("The suit provided must be a member of the class Suit")
         if value not in range(2, 15):
-            raise TypeError("The value provided must be an integer between 2 and 14 (inclusive)")
+            raise TypeError(f"The value provided must be an integer between 2 and 14 (inclusive). {value} was used instead.")
         
 def create_scoundrel_deck():
     """

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<style>
+    .hidden{
+        display: none;
+    }
+</style>
+
+<body>
+    <h1>Scoundrel</h1>
+
+    <button id="Start Game">Start Game!</button>
+
+    <div id="Game Board" class="hidden">
+        <h2>Life Points:</h2>
+        <p  id="life">life</p>
+        
+        <h2>Current Room:</h2>
+        <table>
+            <tr>
+                <td id="card 1"></td>
+                <td id="card 2"></td>
+                <td id="card 3"></td>
+                <td id="card 4"></td>
+            </tr>
+        </table>
+
+        <h2>Equiped Weapon:</h2>
+        <p>strength: </p><p id="weapon val"></p>
+        <p>durability: </p><p id="weapon dur"></p>
+
+        <button id="Skip Room"></button>
+
+        <p>First card to face: </p>
+        <select name="first action" id="first action"></select>
+
+        <p>Second card to face: </p>
+        <select name="second action" id="second action"></select>
+
+        <p>Third card to face: </p>
+        <select name="third action" id="third action"></select>
+
+        <p id="Invalid selections" class="hidden">you may not select the same card more than once.</p>
+
+        <button id="resolve room">Face the dungeon room</button>
+
+    </div>
+
+    <div id="score card" class="hidden">
+        <h2>GAME OVER</h2>
+        <h2 id="result"></h2>
+        <h2>Score:</h2>
+        <p id="score"></p>
+    </div>
+    
+    <script>
+        var start_button = document.getElementById("Start Game");
+        var game_board = document.getElementById("Game Board");
+        var life_display = document.getElementById("life");
+        var room_card_1 = document.getElementById("card 1");
+        var room_card_2 = document.getElementById("card 2");
+        var room_card_3 = document.getElementById("card 3");
+        var room_card_4 = document.getElementById("card 4");
+        var weapon_str = document.getElementById("weapon val");
+        var weapon_dur = document.getElementById("weapon dur");
+        var skip_button = document.getElementById("Skip Room");
+        var first_drop_down = document.getElementById("first action");
+        var second_drop_down = document.getElementById("second action");
+        var third_drop_down = document.getElementById("third action");
+        var warning_text = document.getElementById("Invalid selections");
+        var resolve_room_button = document.getElementById("resolve room");
+        var score_card = document.getElementById("score card");
+        var result = document.getElementById("result");
+        var score_board = document.getElementById("score");
+        
+        var game_state;
+        var game_id;
+
+        function card_to_text(suit_number, val_number) {
+            var card_type;
+            switch (suit_number) {
+                case 1:
+                    card_type = "|Monster: ";
+                    break;
+                case 2:
+                    card_type = "|weapon: ";
+                    break;
+                case 3:
+                    card_type = "|Health Potion: ";
+                    break;
+                case 4:
+                    card_type = "|Monster: ";
+                    break;
+            }
+
+            return card_type + val_number +"|";
+        }
+        
+        function update_game_board(state) {
+            if (state.game_over == true) {
+                game_board.classList.add("hidden");
+                score_card.classList.remove("hidden");
+                if (state.score > 0){
+                    result.textContent = "YOU WIN!!!";
+                } else {
+                    result.textContent = "You Lose...";
+                }
+                score_board.textContent = state.score;
+
+                return null;
+            }
+            
+            life_display.textContent = state.life;
+
+            var drop_down_options = [];
+
+            var card_1_text = card_to_text(state.room[0].suit, state.room[0].value);
+            room_card_1.textContent = card_1_text;
+            if (state.room[0].suit == 1 | state.room[0].suit == 4) {
+                drop_down_options.push("<option value='0t'>" + card_1_text + " by hand<option>");
+                drop_down_options.push("<option value='0f'>" + card_1_text + " with weapon<option>");
+            } else {
+                drop_down_options.push("<option value='0f'>" + card_1_text + "<option>");
+            }
+
+            var card_2_text = card_to_text(state.room[1].suit, state.room[1].value);
+            room_card_2.textContent = card_2_text;
+            if (state.room[1].suit == 1 | state.room[1].suit == 4) {
+                drop_down_options.push("<option value='1t'>" + card_2_text + " by hand<option>");
+                drop_down_options.push("<option value='1f'>" + card_2_text + " with weapon<option>");
+            } else {
+                drop_down_options.push("<option value='1f'>" + card_2_text + "<option>");
+            }
+            
+            var card_3_text = card_to_text(state.room[2].suit, state.room[2].value);
+            room_card_3.textContent = card_3_text;
+            if (state.room[2].suit == 1 | state.room[2].suit == 4) {
+                drop_down_options.push("<option value='2t'>" + card_3_text + " by hand<option>");
+                drop_down_options.push("<option value='2f'>" + card_3_text + " with weapon<option>");
+            } else {
+                drop_down_options.push("<option value='2f'>" + card_3_text + "<option>");
+            }
+            
+            var card_4_text = card_to_text(state.room[3].suit, state.room[3].value);
+            room_card_4.textContent = card_4_text;
+            if (state.room[3].suit == 1 | state.room[3].suit == 4) {
+                drop_down_options.push("<option value='3t'>" + card_4_text + " by hand<option>");
+                drop_down_options.push("<option value='3f'>" + card_4_text + " with weapon<option>");
+            } else {
+                drop_down_options.push("<option value='3f'>" + card_4_text + "<option>");
+            }
+
+            first_drop_down.innerHTML = drop_down_options.join();
+            second_drop_down.innerHTML = drop_down_options.join();
+            third_drop_down.innerHTML = drop_down_options.join();
+
+            if (state.room.length < 3){
+                third_drop_down.classList.add("hidden")
+            }
+            if (state.room.length < 2){
+                second_drop_down.classList.add("hidden")
+            }
+            
+
+            weapon_str.textContent = state.weapon;
+            weapon_dur.textContent = state.weapon_durability;
+
+            if (state.can_skip) {
+                skip_button.textContent = "Skip"
+            } else {
+                skip_button.textContent = "Can't Skip 2 Rooms in a Row"
+            }
+
+            
+
+        }
+        
+        var response;
+        var parsed_response;
+        
+        skip_button.addEventListener("click", async function() {
+            if (skip_button.textContent == "Skip"){
+                
+                response = await fetch("http://127.0.0.1:8000/scoundrel/take-turn/?game_id=" + game_id + "&turn_type=skip");
+                parsed_response = await response.json();
+                // console.log(parsed_response);
+                game_state = parsed_response;
+                await update_game_board(game_state);
+            }
+            
+        });
+        
+        start_button.addEventListener("click", async function() {
+            response = await fetch("http://127.0.0.1:8000/scoundrel/new-game");
+            parsed_response = await response.json();
+            console.log(parsed_response);
+            game_state = parsed_response.state;
+            game_id = parsed_response.game_id;
+            await update_game_board(game_state);
+        
+            game_board.classList.remove("hidden");
+            start_button.classList.add("hidden");
+            
+        });
+
+        resolve_room_button.addEventListener("click", async function() {
+            if (
+                first_drop_down.value[0] == second_drop_down.value[0] |
+                first_drop_down.value[0] == third_drop_down.value[0] |
+                second_drop_down.value[0] == third_drop_down.value[0]
+            ){
+                warning_text.classList.remove("hidden")
+            } else{
+                var url = "http://127.0.0.1:8000/scoundrel/take-turn/?game_id=" + game_id + "&turn_type=resolve&";
+
+                url += "card_resolve_order=" + first_drop_down.value[0] + "&";
+                url += "card_resolve_order=" + second_drop_down.value[0] + "&";
+                url += "card_resolve_order=" + third_drop_down.value[0];
+
+                if (first_drop_down.value[1] == "t") {
+                    url += "&by_hand=true";
+                }else {
+                    url += "&by_hand=false";
+                }
+                if (second_drop_down.value[1] == "t") {
+                    url += "&by_hand=true";
+                }else {
+                    url += "&by_hand=false";
+                }
+                if (third_drop_down.value[1] == "t") {
+                    url += "&by_hand=true";
+                }else {
+                    url += "&by_hand=false";
+                }
+                
+                
+                response = await fetch(url);
+                parsed_response = await response.json();
+                console.log(parsed_response);
+                game_state = parsed_response;
+                await update_game_board(game_state);
+            
+                warning_text.classList.add("hidden");
+            }
+                
+            
+        });
+    
+        
+    </script>
+
+</body>
+</html>
