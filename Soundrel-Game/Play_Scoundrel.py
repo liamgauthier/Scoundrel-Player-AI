@@ -172,7 +172,7 @@ class Scoundrel:
             self.room[card_order[resoltion_placing]] = None
 
             if self.num_monsters == 0:
-                self.end_game(card)
+                self.end_game()
                 break
 
         if not self.game_over:
